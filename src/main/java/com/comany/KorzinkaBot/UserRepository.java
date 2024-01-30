@@ -12,5 +12,4 @@ import java.util.OptionalInt;
 
 @Repository
 public interface UserRepository extends JpaRepository<Customer, Long> {
-        Optional<Customer> findByChatId(Long chatId);
 }
