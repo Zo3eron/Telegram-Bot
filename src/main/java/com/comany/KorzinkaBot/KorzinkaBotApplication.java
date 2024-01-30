@@ -10,7 +10,6 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 public class KorzinkaBotApplication {
 
     public static void main(String[] args) {
-
         SpringApplication.run(KorzinkaBotApplication.class, args);
     }
 }

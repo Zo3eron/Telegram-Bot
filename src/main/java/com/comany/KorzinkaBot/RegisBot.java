@@ -10,20 +10,19 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
 @Component
-    public class RegisBot {
+public class RegisBot {
 
-        @Autowired
-        KorzinkaBot korzinkaBot;
+    @Autowired
+    KorzinkaBot korzinkaBot;
 
-        @EventListener({ContextRefreshedEvent.class})
-        public void init() throws TelegramApiException {
-            TelegramBotsApi telegramBotsApi = new TelegramBotsApi(DefaultBotSession.class);
-            try {
-                telegramBotsApi.registerBot(korzinkaBot);
-            }
-            catch (TelegramApiException e) {
-                System.err.println("Error");
-            }
+    @EventListener({ContextRefreshedEvent.class})
+    public void init() throws TelegramApiException {
+        TelegramBotsApi telegramBotsApi = new TelegramBotsApi(DefaultBotSession.class);
+        try {
+            telegramBotsApi.registerBot(korzinkaBot);
+        } catch (TelegramApiException e) {
+            System.err.println("Error");
         }
     }
+}
 

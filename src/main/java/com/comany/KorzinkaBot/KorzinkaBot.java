@@ -2,7 +2,6 @@ package com.comany.KorzinkaBot;
 
 import com.comany.KorzinkaBot.modul.Customer;
 import com.comany.KorzinkaBot.modul.CustomerDto;
-import com.sun.nio.sctp.SendFailedNotification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -38,12 +37,15 @@ public class KorzinkaBot extends TelegramLongPollingBot {
 
         if (message.hasText()) {
 
+            Optional<Customer> byId = userRepository.findById(update.getMessage().getChatId());
             Customer customer = customerMapper.toEntity(new CustomerDto());
             if (text.equals("/start")) {
+                if (byId.isEmpty()){
                     customer.setChatId(update.getMessage().getChatId());
                     customer.setUserName(update.getMessage().getChat().getUserName());
                     this.customerMapper.toDto(this.userRepository.save(customer));
-                    returnMessage = stageStartUz(message);
+                }
+                returnMessage = stageStartUz(message);
             } else if (text.equals("Til: O'zbekcha \uD83C\uDDFA\uD83C\uDDFF/ English\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC65\uDB40\uDC6E\uDB40\uDC67\uDB40\uDC7F") || text.equals("Language : O'zbekcha \uD83C\uDDFA\uD83C\uDDFF/ English\uD83C\uDFF4\uDB40\uDC67\uDB40\uDC62\uDB40\uDC65\uDB40\uDC6E\uDB40\uDC67\uDB40\uDC7F")) {
                 returnMessage = language_start(message);
 
@@ -59,49 +61,51 @@ public class KorzinkaBot extends TelegramLongPollingBot {
                 returnMessage = about_startEn(message);
             } else if (text.equals("Qaynoq vakansiyalar \uD83D\uDD25")) {
                 returnMessage = stageVakansUz(message);
-            } else if ( text.equals("Hot Vacancies \uD83D\uDD25")) {
-                returnMessage=stageVakansEn(message);
+            } else if (text.equals("Hot Vacancies \uD83D\uDD25")) {
+                returnMessage = stageVakansEn(message);
             } else if (text.equals("Back")) {
                 returnMessage = stageBack(message);
-            } else if (text.equals("Yuk tashubvchi") || text.equals("Oshpaz")|| text.equals("Qo'riqchi")|| text.equals("Sotuvchi kassir")) {
-                returnMessage=stageIshUz(message);
-            } else if (text.equals("Shipper") || text.equals("Chef") || text.equals("Warden")|| text.equals("Cashier")) {
-                returnMessage=stageIshEn(message);
+            } else if (text.equals("Yuk tashubvchi") || text.equals("Oshpaz") || text.equals("Qo'riqchi") || text.equals("Sotuvchi kassir")) {
+                returnMessage = stageIshUz(message);
+            } else if (text.equals("Shipper") || text.equals("Chef") || text.equals("Warden") || text.equals("Cashier")) {
+                returnMessage = stageIshEn(message);
             } else if (text.equals("\uD83D\uDED2 Eshonguzar")) {
-                returnMessage=stageLokatsiya(message);
-            }
-            else if (Objects.equals(step, "2") && text!="Back"){
-                customer.setChatId(update.getMessage().getChatId());
-                customer.setUserName(update.getMessage().getChat().getUserName());
-                customer.setFullName(message.getText());
-                this.customerMapper.toDto(this.userRepository.save(customer));
-                returnMessage=stageData(message);
-            }
-            else if (Objects.equals(step, "3") && text!="Back") {
-                customer.setChatId(update.getMessage().getChatId());
-                customer.setUserName(update.getMessage().getChat().getUserName());
-                customer.setData(message.getText());
-                this.customerMapper.toDto(this.userRepository.save(customer));
-                returnMessage=stageHome(message);
-            }
-            else if (Objects.equals(step, "4") && text!="Back") {
-                customer.setChatId(update.getMessage().getChatId());
-                customer.setUserName(update.getMessage().getChat().getUserName());
-                 customer.setHome(message.getText());
-                this.customerMapper.toDto(this.userRepository.save(customer));
-                returnMessage=stageContact(message);
-            }
-            else if (text.equals("Erkak") || text.equals("Ayol") || step.equals("5")) {
-                customer.setChatId(update.getMessage().getChatId());
-                customer.setUserName(update.getMessage().getChat().getUserName());
-               customer.setJinsi(message.getText());
-                this.customerMapper.toDto(this.userRepository.save(customer));
-                returnMessage=stageEnd(message);
+                returnMessage = stageLokatsiya(message);
+            } else if (Objects.equals(step, "2") && text != "Back") {
+
+                returnMessage = stageData(message);
+            } else if (Objects.equals(step, "3") && text != "Back") {
+                returnMessage = stageHome(message);
+            } else if (Objects.equals(step, "4") && text != "Back") {
+                if (byId.isPresent()){
+                    userRepository.delete(customer);
+                    customer.setChatId(update.getMessage().getChatId());
+                    customer.setUserName(update.getMessage().getChat().getUserName());
+                    customer.setHome(message.getText());
+                    this.customerMapper.toDto(this.userRepository.save(customer));
+                    returnMessage = stageContact(message);
+                }else {
+                    returnMessage = stageContact(message);
+                }
+            } else if (text.equals("Erkak") || text.equals("Ayol") && step.equals("5") && !text.equals("Back")) {
+
+                if (byId.isPresent()){
+                    userRepository.delete(customer);
+                    customer.setChatId(update.getMessage().getChatId());
+                    customer.setUserName(update.getMessage().getChat().getUserName());
+                    this.customerMapper.toDto(this.userRepository.save(customer));
+                    returnMessage = stageEnd(message);
+                }else {
+                    returnMessage = stageEnd(message);
+                }
+
+            } else{
+                returnMessage.setText("Iltimos Buttonlardan birini tanlang");
+
             }
 
-        }
-        else if (message.hasContact()) {
-            returnMessage =stageJins(message);
+        } else if (message.hasContact()) {
+            returnMessage = stageJins(message);
         }
         try {
             execute(returnMessage);
@@ -110,6 +114,7 @@ public class KorzinkaBot extends TelegramLongPollingBot {
         }
 
     }
+
     private SendMessage stageJins(Message message) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setText("Iltimos jinisingizni tanlang");
@@ -130,6 +135,7 @@ public class KorzinkaBot extends TelegramLongPollingBot {
 
         return sendMessage;
     }
+
     private SendMessage stageHome(Message message) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setText("Yashash manzilingizni kiriting");
@@ -146,9 +152,10 @@ public class KorzinkaBot extends TelegramLongPollingBot {
         sendMessage.setReplyMarkup(replyKeyboardMarkup);
 
         replyKeyboardMarkup.setResizeKeyboard(true);
-        step="4";
+        step = "4";
         return sendMessage;
     }
+
     private SendMessage stageData(Message message) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setText("Tug'ilgan sanangizni jonating: 11.10.2000");
@@ -165,12 +172,12 @@ public class KorzinkaBot extends TelegramLongPollingBot {
         sendMessage.setReplyMarkup(replyKeyboardMarkup);
 
         replyKeyboardMarkup.setResizeKeyboard(true);
-        step="3";
+        step = "3";
         return sendMessage;
     }
 
 
-    public void sendLocationToTelegramBot( long chatId) {
+    public void sendLocationToTelegramBot(long chatId) {
         SendLocation location = new SendLocation();
         location.setChatId(chatId);
         location.setLatitude(41.25210);
@@ -182,6 +189,7 @@ public class KorzinkaBot extends TelegramLongPollingBot {
             e.printStackTrace();
         }
     }
+
     private SendMessage stageLokatsiya(Message message) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setText("\uD83D\uDCCCManzil: Zangiota tumani, Eshonguzar.\n" +
@@ -202,10 +210,9 @@ public class KorzinkaBot extends TelegramLongPollingBot {
         sendMessage.setReplyMarkup(replyKeyboardMarkup);
 
         replyKeyboardMarkup.setResizeKeyboard(true);
-        step="2";
+        step = "2";
         return sendMessage;
     }
-
 
 
     private SendMessage language_start(Message message) {
@@ -260,7 +267,7 @@ public class KorzinkaBot extends TelegramLongPollingBot {
         rowList.add(fourth);
         replyKeyboardMarkup.setKeyboard(rowList);
         sendMessage.setReplyMarkup(replyKeyboardMarkup);
-        step="1";
+        step = "1";
         return sendMessage;
     }
 
@@ -293,7 +300,7 @@ public class KorzinkaBot extends TelegramLongPollingBot {
         rowList.add(fourth);
         replyKeyboardMarkup.setKeyboard(rowList);
         sendMessage.setReplyMarkup(replyKeyboardMarkup);
-        step="1";
+        step = "1";
         return sendMessage;
     }
 
@@ -366,6 +373,7 @@ public class KorzinkaBot extends TelegramLongPollingBot {
         sendMessage.setReplyMarkup(replyKeyboardMarkup);
         return sendMessage;
     }
+
     private SendMessage stageVakansEn(Message message) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setText("\n" +
@@ -424,6 +432,7 @@ public class KorzinkaBot extends TelegramLongPollingBot {
 
         return sendMessage;
     }
+
     private SendMessage stageIshEn(Message message) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setText(BotQuery.ResumeTextEn);
@@ -507,7 +516,7 @@ public class KorzinkaBot extends TelegramLongPollingBot {
         replyKeyboardMarkup.setKeyboard(rowList);
         replyKeyboardMarkup.setResizeKeyboard(true);
         sendMessage.setReplyMarkup(replyKeyboardMarkup);
-        step="5";
+        step = "5";
         return sendMessage;
     }
 
@@ -554,7 +563,7 @@ public class KorzinkaBot extends TelegramLongPollingBot {
         rowList.add(fourth);
         replyKeyboardMarkup.setKeyboard(rowList);
         sendMessage.setReplyMarkup(replyKeyboardMarkup);
-        step="1";
+        step = "1";
         return sendMessage;
     }
 

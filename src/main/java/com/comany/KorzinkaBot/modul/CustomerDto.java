@@ -12,6 +12,7 @@ import org.springframework.objenesis.SpringObjenesis;
 public class CustomerDto {
 
     private Long chatId;
+
     private String fullName;
     private String userName;
     private String home;
